@@ -27,8 +27,18 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name)
 nlp = pipeline("text-classification", model=model, tokenizer=tokenizer)
 
 def categorize_comment(comment):
-    result = nlp(comment)
-    category = result[0]['label']
+    inputs = tokenizer.encode_plus(
+        comment,
+        max_length=512,
+        truncation=True,
+        padding='max_length',
+        return_tensors='pt'
+    )
+    with torch.no_grad():
+        outputs = model(**inputs)
+    logits = outputs.logits
+    category_idx = logits.argmax(dim=-1).item()
+    category = model.config.id2label[category_idx]
     return category
 
 data['category'] = data['comment'].apply(categorize_comment)
