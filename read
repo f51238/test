@@ -5,17 +5,33 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from textblob import TextBlob
 
-# Load the data into a DataFrame (assuming it's in a CSV format)
-# Sample comments data
-data = pd.DataFrame({
-    'comment': [
-        "I cannot log in after returning from my vacation.",
-        "My absence balance is incorrect after coming back from leave.",
-        "I'm having trouble resetting my password.",
-        "The platform won't let me update my profile picture.",
-        "I'm unable to submit my expense report."
-    ]
-})
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+from nltk.tokenize import word_tokenize
+nltk.download('stopwords')
+nltk.download('punkt')
+
+# Preprocessing function
+def preprocess_text(text):
+    # Convert to lowercase
+    text = text.lower()
+
+    # Remove stop words and punctuation
+    stop_words = set(stopwords.words('english'))
+    tokens = word_tokenize(text)
+    filtered_tokens = [token for token in tokens if token not in stop_words and token.isalpha()]
+
+    # Stem the words
+    stemmer = PorterStemmer()
+    stemmed_tokens = [stemmer.stem(token) for token in filtered_tokens]
+
+    # Rejoin the tokens into a string
+    preprocessed_text = ' '.join(stemmed_tokens)
+    return preprocessed_text
+
+# Apply preprocessing to the comments
+data['comment'] = data['comment'].apply(preprocess_text)
 
 comments = data['comment']  # Replace 'comment' with the actual column name containing the comments
 
