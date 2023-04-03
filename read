@@ -1,28 +1,24 @@
+import pandas as pd
 from transformers import T5ForConditionalGeneration, T5Tokenizer
-
-def handle_non_string_values(text):
-    if not isinstance(text, str):
-        text = str(text)
-    return text
-
-def summarize_text(text, model, tokenizer):
-    text = handle_non_string_values(text)
-    inputs = tokenizer.encode("summarize: " + text, return_tensors="pt", max_length=512, truncation=True)
-    summary_ids = model.generate(inputs, max_length=75, min_length=20, length_penalty=2.0, num_beams=4, early_stopping=True)
-    summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-    return summary
 
 # Initialize the T5 model and tokenizer
 tokenizer = T5Tokenizer.from_pretrained("t5-small")
 model = T5ForConditionalGeneration.from_pretrained("t5-small")
 
-# List of comments
-comments = [
-    "I'm having trouble logging in to the HR platform. The password reset link doesn't seem to work. Can someone please help?",
-    "I was wondering if the HR platform can generate custom reports for our department. We need more detailed analytics on employee performance."
-]
+# Define the summarize_text function
+def summarize_text(text, model, tokenizer):
+    inputs = tokenizer.encode("summarize: " + text, return_tensors="pt", max_length=512, truncation=True)
+    summary_ids = model.generate(inputs, max_length=75, min_length=20, length_penalty=2.0, num_beams=4, early_stopping=True)
+    summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+    return summary
 
-# Summarize each comment
-for comment in comments:
-    summary = summarize_text(comment, model, tokenizer)
-    print(summary)
+# Read the data from the CSV file
+input_csv_file = "input.csv"  # Replace with your input CSV file path
+df = pd.read_csv(input_csv_file)
+
+# Assuming the comments are in a column named 'Comments'
+df['Summaries'] = df['Comments'].apply(lambda x: summarize_text(x, model, tokenizer))
+
+# Write the updated DataFrame back to a CSV file
+output_csv_file = "output.csv"  # Replace with your desired output CSV file path
+df.to_csv(output_csv_file, index=False)
