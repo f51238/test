@@ -2,8 +2,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from transformers import T5ForConditionalGeneration, T5Tokenizer, TextDatasetForConditionalGeneration, Seq2SeqTrainingArguments, Seq2SeqTrainer
 
-# Load your dataset with human-generated summaries (e.g., 1,000 items)
-# Replace this with the actual loading of your dataset
+# my generated summaries 
 df = pd.read_csv("data_with_summaries.csv")
 
 # Split the data into training, validation, and test sets
