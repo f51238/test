@@ -1,0 +1,43 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from transformers import T5ForConditionalGeneration, T5Tokenizer, TextDatasetForConditionalGeneration, Seq2SeqTrainingArguments, Seq2SeqTrainer
+
+# Load your dataset with human-generated summaries (e.g., 1,000 items)
+# Replace this with the actual loading of your dataset
+df = pd.read_csv("data_with_summaries.csv")
+
+# Split the data into training, validation, and test sets
+train_df, val_test_df = train_test_split(df, test_size=0.3, random_state=42)
+val_df, test_df = train_test_split(val_test_df, test_size=0.5, random_state=42)
+
+# Load pre-trained model and tokenizer
+model = T5ForConditionalGeneration.from_pretrained("t5-small")
+tokenizer = T5Tokenizer.from_pretrained("t5-small")
+
+# Create dataset objects
+train_dataset = TextDatasetForConditionalGeneration(tokenizer, train_df["text"].tolist(), train_df["summary"].tolist(), max_source_length=512, max_target_length=150)
+val_dataset = TextDatasetForConditionalGeneration(tokenizer, val_df["text"].tolist(), val_df["summary"].tolist(), max_source_length=512, max_target_length=150)
+
+# Set up training arguments
+training_args = Seq2SeqTrainingArguments(
+    output_dir="./results",
+    num_train_epochs=5,
+    per_device_train_batch_size=4,
+    per_device_eval_batch_size=4,
+    logging_dir="./logs",
+    save_strategy="epoch",
+    evaluation_strategy="epoch",
+    learning_rate=5e-5,
+    weight_decay=0.01,
+    fp16=True,
+)
+
+# Train the model
+trainer = Seq2SeqTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=train_dataset,
+    eval_dataset=val_dataset,
+)
+
+trainer.train()
