@@ -1,0 +1,33 @@
+# Load the remaining data without summaries
+# Replace this with actual data
+remaining_df = pd.read_csv("remaining_data.csv")
+
+# Function to generate summaries
+def generate_summary(text, model, tokenizer):
+    input_ids = tokenizer.encode("summarize: " + text, return_tensors="pt")
+    summary_ids = model.generate(input_ids, num_beams=4, max_length=150, early_stopping=True)
+    return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+
+# Generate summaries for the remaining data
+remaining_df["summary"] = remaining_df["text"].apply(lambda x: generate_summary(x, model, tokenizer))
+
+# Combine the human-generated and model-generated summaries
+combined_df = pd.concat([df, remaining_df], ignore_index=True)
+
+# Split the combined data into training, validation, and test sets
+train_df, val_test_df = train_test_split(combined_df, test_size=0.3, random_state=42)
+val_df, test_df = train_test_split(val_test_df, test_size=0.5, random_state=42)
+
+# Create new dataset objects with the combined data
+train_dataset = TextDatasetForConditionalGeneration(tokenizer, train_df["text"].tolist(), train_df["summary"].tolist(), max_source_length=512, max_target_length=150)
+val_dataset = TextDatasetForConditionalGeneration(tokenizer, val_df["text"].tolist(), val_df["summary"].tolist(), max_source_length=512, max_target_length=150)
+
+# Fine-tune the model on the combined dataset
+trainer = Seq2SeqTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=train_dataset,
+    eval_dataset=val_dataset,
+)
+
+trainer.train()
