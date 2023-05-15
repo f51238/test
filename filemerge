@@ -1,0 +1,24 @@
+import os
+import csv
+
+folder_path = "/path/to/folder"  # Replace with the path to your folder
+output_file = "stacked_data.csv"  # Output file name
+
+csv_files = [file for file in os.listdir(folder_path) if file.endswith(".csv")]
+
+# Open the output file in append mode
+with open(output_file, "a", newline="") as output_csv:
+    writer = csv.writer(output_csv)
+
+    # Loop through each CSV file in the folder
+    for csv_file in csv_files:
+        # Construct the full path to the current CSV file
+        file_path = os.path.join(folder_path, csv_file)
+
+        # Open the current CSV file
+        with open(file_path, "r") as input_csv:
+            reader = csv.reader(input_csv)
+
+            # Iterate over each row in the current CSV file
+            for row in reader:
+                writer.writerow(row)
