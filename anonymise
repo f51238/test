@@ -1,0 +1,46 @@
+import os
+import csv
+import re
+
+folder_path = "/path/to/folder"  # Replace with the path to your folder
+output_file = "anonymized_data.csv"  # Output file name
+
+csv_files = [file for file in os.listdir(folder_path) if file.endswith(".csv")]
+
+# Regular expressions for matching names, dates of birth, and ID numbers
+name_regex = re.compile(r"\b[A-Za-z]+\b")
+dob_regex = re.compile(r"\b\d{1,2}/\d{1,2}/\d{4}\b")
+id_regex = re.compile(r"\bE\d{7}\b")
+
+# Function to perform anonymization
+def anonymize_text(text):
+    # Replace names with a placeholder
+    text = name_regex.sub("REDACTED_NAME", text)
+
+    # Replace dates of birth with a placeholder
+    text = dob_regex.sub("REDACTED_DOB", text)
+
+    # Replace ID numbers with a placeholder
+    text = id_regex.sub("REDACTED_ID", text)
+
+    return text
+
+# Open the output file in append mode
+with open(output_file, "a", newline="", encoding="utf-8") as output_csv:
+    writer = csv.writer(output_csv)
+
+    # Loop through each CSV file in the folder
+    for csv_file in csv_files:
+        # Construct the full path to the current CSV file
+        file_path = os.path.join(folder_path, csv_file)
+
+        # Open the current CSV file with the appropriate encoding
+        with open(file_path, "r", encoding="utf-8") as input_csv:
+            reader = csv.reader(input_csv)
+
+            # Iterate over each row in the current CSV file
+            for row in reader:
+                # Anonymize the "long_description" column (assuming it is the second column)
+                row[1] = anonymize_text(row[1])
+
+                writer.writerow(row)
