@@ -12,9 +12,10 @@ csv_files = [file for file in os.listdir(folder_path) if file.endswith(".csv")]
 # Read the redact names CSV file
 redact_names_df = pd.read_csv(redact_names_file)
 
-# Extract given names from the names to be redacted
-redact_names_df['Given Names'] = redact_names_df['Full Name'].str.split(',').str[1].str.strip()
-redact_given_names = redact_names_df['Given Names'].tolist()
+# Extract full names, first names, and surnames from the names to be redacted
+redact_full_names = redact_names_df['Full Name'].tolist()
+redact_first_names = redact_names_df['Full Name'].str.split().str[0].tolist()
+redact_surnames = redact_names_df['Full Name'].str.split().str[-1].tolist()
 
 # Regular expressions for matching dates, enumber id, and ID numbers
 date_regex = re.compile(r"\b\d{1,2}/\d{1,2}/\d{4}\b")
@@ -28,13 +29,20 @@ def anonymize_text(text):
 
     # Replace ID numbers with a placeholder
     text = id_regex.sub("REDACTED_ID", text)
+    
+     # Replace E numbers with a placeholder
+    text = enum_regex.sub("REDACTED_ENUM", text)
 
-    # Replace names with a placeholder
+    # Replace names with placeholders
     words = text.split()
     anonymized_words = []
     for word in words:
-        if word in redact_given_names:
+        if any(full_name in word for full_name in redact_full_names):
             anonymized_words.append("REDACTED_NAME")
+        elif any(first_name in word for first_name in redact_first_names):
+            anonymized_words.append("REDACTED_FIRSTNAME")
+        elif any(surname in word for surname in redact_surnames):
+            anonymized_words.append("REDACTED_SURNAME")
         else:
             anonymized_words.append(word)
     text = " ".join(anonymized_words)
