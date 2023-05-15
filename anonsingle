@@ -1,0 +1,53 @@
+import csv
+import re
+import pandas as pd
+
+redact_names_file = "names.csv"  # Path to the file with names to redact
+input_file = "input_data.csv"  # Input file containing the comments
+output_file = "anonymized_data.csv"  # Output file name
+
+# Read the redact names CSV file
+redact_names_df = pd.read_csv(redact_names_file)
+
+# Extract full names, first names, and surnames from the names to be redacted
+redact_full_names = redact_names_df['Full Name'].tolist()
+redact_first_names = redact_names_df['Full Name'].str.split().str[0].tolist()
+redact_surnames = redact_names_df['Full Name'].str.split().str[-1].tolist()
+
+# Regular expressions for matching dates, enumber id, and ID numbers
+date_regex = re.compile(r"\b\d{1,2}/\d{1,2}/\d{4}\b")
+enum_regex = re.compile(r"\bE\d{7}\b", re.IGNORECASE)
+id_regex = re.compile(r"\b\d{8}\b")
+
+# Function to perform anonymization
+def anonymize_text(text):
+    # Replace dates of birth with a placeholder
+    text = date_regex.sub("REDACTED_DATE", text)
+
+    # Replace ID numbers with a placeholder
+    text = id_regex.sub("REDACTED_ID", text)
+
+    # Replace names with placeholders
+    words = text.split()
+    anonymized_words = []
+    for word in words:
+        if any(full_name in word for full_name in redact_full_names):
+            anonymized_words.append("REDACTED_NAME")
+        elif any(first_name in word for first_name in redact_first_names):
+            anonymized_words.append("REDACTED_FIRSTNAME")
+        elif any(surname in word for surname in redact_surnames):
+            anonymized_words.append("REDACTED_SURNAME")
+        else:
+            anonymized_words.append(word)
+    text = " ".join(anonymized_words)
+
+    return text
+
+# Read the input file
+input_data = pd.read_csv(input_file)
+
+# Anonymize the comments column (assuming it is named "comments")
+input_data['comments'] = input_data['comments'].apply(anonymize_text)
+
+# Save the anonymized data to the output file
+input_data.to_csv(output_file, index=False)
