@@ -1,0 +1,33 @@
+import re
+
+input_file = "summaries.txt"  # Path to the file containing the summaries
+output_file = "anonymized_summaries.txt"  # Output file name
+
+# Regular expressions for matching dates, E numbers, and IDs
+date_regex = re.compile(r"\b\d{1,2}/\d{1,2}/\d{4}\b")
+enum_regex = re.compile(r"\bE\d{7}\b", re.IGNORECASE)
+id_regex = re.compile(r"\b\d{8}\b")
+
+# Function to remove dates, E numbers, and IDs from the text
+def remove_identifiers(text):
+    # Remove dates
+    text = date_regex.sub("", text)
+
+    # Remove E numbers
+    text = enum_regex.sub("", text)
+
+    # Remove IDs
+    text = id_regex.sub("", text)
+
+    return text
+
+# Read the input file
+with open(input_file, "r", encoding="utf-8") as file:
+    summaries = file.readlines()
+
+# Process each summary and remove identifiers
+anonymized_summaries = [remove_identifiers(summary) for summary in summaries]
+
+# Save the anonymized summaries to the output file
+with open(output_file, "w", encoding="utf-8") as file:
+    file.writelines(anonymized_summaries)
