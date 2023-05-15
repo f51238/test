@@ -1,0 +1,30 @@
+import csv
+import re
+import pandas as pd
+
+input_file = "stacked_data.csv"  # Input file containing the comments
+names_file = "names.csv"  # CSV file containing the list of names to remove
+output_file = "anonymized_data.csv"  # Output file name
+
+# Read the names CSV file
+names_df = pd.read_csv(names_file)
+
+# Extract all the names from the CSV column
+names_list = names_df['Full Name'].tolist()
+
+# Regular expression pattern to match names
+names_regex = re.compile(r"\b(" + "|".join(re.escape(name) for name in names_list) + r")\b", re.IGNORECASE)
+
+# Function to remove names from the text
+def remove_names(text):
+    text = names_regex.sub("", text)
+    return text
+
+# Read the input file
+input_data = pd.read_csv(input_file)
+
+# Remove names from the comments column (assuming it is named "comments")
+input_data['comments'] = input_data['comments'].apply(remove_names)
+
+# Save the anonymized data to the output file
+input_data.to_csv(output_file, index=False)
